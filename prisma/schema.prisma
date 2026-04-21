@@ -1,0 +1,240 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String    @id @default(uuid()) @db.Uuid
+  email        String?   @unique
+  passwordHash String?   @map("password_hash")
+  isActive     Boolean   @default(true) @map("is_active")
+  isAdmin      Boolean   @default(false) @map("is_admin")
+  isAnonymous  Boolean   @default(false) @map("is_anonymous")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  lastSeenAt   DateTime? @map("last_seen_at")
+
+  profile      Profile?
+  posts        Post[]    @relation("authorPosts")
+  mentor       Mentor?
+  communityMemberships CommunityMember[]
+  postReactions PostReaction[]
+  sessionParticipants SessionParticipant[]
+  threadParticipants ThreadParticipant[]
+  messages Message[]
+  notifications Notification[]
+  clientContracts Contract[] @relation("clientContracts")
+  mentorContracts Contract[] @relation("mentorContracts")
+  adminFlags AdminFlag[]
+  hostedSessions Session[] @relation("UserHostedSessions")
+  @@map("users")
+}
+
+model Profile {
+  userId      String  @id @db.Uuid
+  displayName String? @map("display_name")
+  initials    String?
+  avatar      String?
+  bio         String?
+  role        String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+  @@map("profiles")
+}
+
+model Community {
+  slug        String   @id
+  name        String
+  icon        String?
+  accentHex   String?  @map("accent_hex")
+  description String?  
+  membersCount Int     @default(0) @map("members_count")
+  onlineCount  Int     @default(0) @map("online_count")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  members CommunityMember[]
+  posts   Post[]
+  @@map("communities")
+}
+
+model CommunityMember {
+  communitySlug String  @map("community_slug")
+  userId        String  @db.Uuid @map("user_id")
+  role          String? @default("member")
+  joinedAt      DateTime @default(now()) @map("joined_at")
+
+  community Community @relation(fields: [communitySlug], references: [slug])
+  user      User      @relation(fields: [userId], references: [id])
+
+  @@id([communitySlug, userId])
+  @@map("community_members")
+}
+
+model Post {
+  id         String   @id @default(uuid()) @db.Uuid
+  authorId   String?  @db.Uuid @map("author_id")
+  communitySlug String? @map("community_slug")
+  parentId   String?  @db.Uuid @map("parent_id")
+  content    String?
+  metadata   Json?
+  isAnonymous Boolean @default(false) @map("is_anonymous")
+  createdAt  DateTime @default(now()) @map("created_at")
+  editedAt   DateTime? @map("edited_at")
+  likeCount  Int      @default(0) @map("like_count")
+  replyCount Int      @default(0) @map("reply_count")
+
+  author User? @relation("authorPosts", fields: [authorId], references: [id])
+  community Community? @relation(fields: [communitySlug], references: [slug])
+  parent Post? @relation("postParent", fields: [parentId], references: [id])
+  replies Post[] @relation("postParent")
+  reactions PostReaction[]
+
+  @@index([createdAt(sort: Desc)])
+  @@map("posts")
+}
+
+model PostReaction {
+  id           String   @id @default(uuid()) @db.Uuid
+  postId       String   @db.Uuid @map("post_id")
+  userId       String   @db.Uuid @map("user_id")
+  reactionType String   @default("like") @map("reaction_type")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  post Post @relation(fields: [postId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([postId, userId, reactionType])
+  @@map("post_reactions")
+}
+
+model Mentor {
+  userId  String @id @db.Uuid
+  yrs     Int?
+  helped  Int?
+  rating  Float?
+  online  Boolean @default(false)
+  topics  String[] @default([])
+  style   String[] @default([])
+  stage   String?
+  avail   Int @default(0)
+  exp     Int @default(0)
+  activity Int @default(0)
+  quote   String?
+  tags    Json?
+
+  user User @relation(fields: [userId], references: [id])
+  @@index([topics], type: Gin)
+  @@map("mentors")
+}
+
+model Session {
+  id String @id @default(uuid()) @db.Uuid
+  title String?
+  hostId String? @db.Uuid @map("host_id")
+  communitySlug String? @map("community_slug")
+  startsAt DateTime? @map("starts_at")
+  endsAt DateTime? @map("ends_at")
+  capacity Int?
+  status String @default("scheduled")
+  metadata Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  host User? @relation("UserHostedSessions", fields: [hostId], references: [id])
+  participants SessionParticipant[]
+  @@map("sessions")
+}
+
+model SessionParticipant {
+  sessionId String @db.Uuid @map("session_id")
+  userId    String @db.Uuid @map("user_id")
+  role      String? @default("participant")
+  joinedAt  DateTime @default(now()) @map("joined_at")
+  leftAt    DateTime? @map("left_at")
+
+  session Session @relation(fields: [sessionId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@id([sessionId, userId])
+  @@map("session_participants")
+}
+
+model Thread {
+  id String @id @default(uuid()) @db.Uuid
+  isPrivate Boolean @default(true) @map("is_private")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  participants ThreadParticipant[]
+  messages Message[]
+  @@map("threads")
+}
+
+model ThreadParticipant {
+  threadId String @db.Uuid @map("thread_id")
+  userId   String @db.Uuid @map("user_id")
+  lastReadAt DateTime? @map("last_read_at")
+
+  thread Thread @relation(fields: [threadId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@id([threadId, userId])
+  @@map("thread_participants")
+}
+
+model Message {
+  id String @id @default(uuid()) @db.Uuid
+  threadId String @db.Uuid @map("thread_id")
+  authorId String? @db.Uuid @map("author_id")
+  content String?
+  metadata Json?
+  createdAt DateTime @default(now()) @map("created_at")
+  editedAt DateTime? @map("edited_at")
+
+  thread Thread @relation(fields: [threadId], references: [id])
+  author User? @relation(fields: [authorId], references: [id])
+  @@map("messages")
+}
+
+model Notification {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid @map("user_id")
+  type String?
+  payload Json?
+  isRead Boolean @default(false) @map("is_read")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+  @@map("notifications")
+}
+
+model Contract {
+  id String @id @default(uuid()) @db.Uuid
+  clientId String? @db.Uuid @map("client_id")
+  mentorId String? @db.Uuid @map("mentor_id")
+  contractType String? @map("contract_type")
+  terms Json?
+  status String @default("draft")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime? @map("updated_at")
+
+  client User? @relation("clientContracts", fields: [clientId], references: [id])
+  mentor User? @relation("mentorContracts", fields: [mentorId], references: [id])
+  @@map("contracts")
+}
+
+model AdminFlag {
+  id String @id @default(uuid()) @db.Uuid
+  targetType String @map("target_type")
+  targetId   String @map("target_id")
+  flagType   String? @map("flag_type")
+  reason     String?
+  createdBy  String? @db.Uuid @map("created_by")
+  isResolved Boolean @default(false) @map("is_resolved")
+  resolvedAt DateTime? @map("resolved_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  creator User? @relation(fields: [createdBy], references: [id])
+  @@map("admin_flags")
+}
