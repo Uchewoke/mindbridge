@@ -108,8 +108,7 @@ body {
   font-family: var(--font-body);
   line-height: 1.6;
   color: var(--ink);
-  background: radial-gradient(ellipse at 8% 6%, #fff9f0 0%, var(--cream) 38%, var(--cream-d) 100%)
-    fixed;
+  background: #0d1b2a fixed;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;

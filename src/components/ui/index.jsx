@@ -7,7 +7,11 @@ export function Button({ variant = 'dark', size = 'md', style, ...props }) {
     outline: { background: '#fff', color: 'var(--ink)', border: '1px solid #d7dccc' },
     danger: { background: 'var(--blush)', color: '#fff', border: '1px solid var(--blush)' },
     ghost: { background: 'transparent', color: 'var(--ink-s)', border: '1px solid transparent' },
-    anon: { background: 'var(--anon-accent)', color: '#0d0f0c', border: '1px solid var(--anon-accent)' },
+    anon: {
+      background: 'var(--anon-accent)',
+      color: '#0d0f0c',
+      border: '1px solid var(--anon-accent)',
+    },
   }
   const sizes = {
     xs: { padding: '6px 10px', fontSize: 12 },
@@ -30,7 +34,14 @@ export function Button({ variant = 'dark', size = 'md', style, ...props }) {
   )
 }
 
-export function Avatar({ initials = 'MB', background = 'linear-gradient(135deg,#7FA878,#C4775A)', size = 38, goldRing = false, online = false, emoji }) {
+export function Avatar({
+  initials = 'MB',
+  background = 'linear-gradient(135deg,#7FA878,#C4775A)',
+  size = 38,
+  goldRing = false,
+  online = false,
+  emoji,
+}) {
   return (
     <div style={{ position: 'relative', width: size, height: size }}>
       <div
@@ -119,7 +130,14 @@ export function Card({ children, style }) {
 
 export function CardTitle({ children, action }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 12,
+      }}
+    >
       <h3 style={{ margin: 0, fontFamily: 'Fraunces, serif', fontSize: 20 }}>{children}</h3>
       {action}
     </div>
@@ -128,8 +146,17 @@ export function CardTitle({ children, action }) {
 
 export function Toggle({ checked, onChange, id }) {
   return (
-    <label htmlFor={id} style={{ position: 'relative', width: 40, height: 24, display: 'inline-block' }}>
-      <input id={id} type="checkbox" checked={checked} onChange={onChange} style={{ opacity: 0, width: 0, height: 0 }} />
+    <label
+      htmlFor={id}
+      style={{ position: 'relative', width: 40, height: 24, display: 'inline-block' }}
+    >
+      <input
+        id={id}
+        type="checkbox"
+        checked={checked}
+        onChange={onChange}
+        style={{ opacity: 0, width: 0, height: 0 }}
+      />
       <span
         style={{
           position: 'absolute',
@@ -157,7 +184,15 @@ export function Toggle({ checked, onChange, id }) {
 
 export function ToggleRow({ label, sub, checked, onChange, id }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '10px 0', borderBottom: '1px solid #eef0e6' }}>
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        gap: 12,
+        padding: '10px 0',
+        borderBottom: '1px solid #eef0e6',
+      }}
+    >
       <div>
         <div style={{ fontWeight: 600 }}>{label}</div>
         {sub ? <div style={{ color: 'var(--ink-m)', fontSize: 13 }}>{sub}</div> : null}
@@ -169,10 +204,23 @@ export function ToggleRow({ label, sub, checked, onChange, id }) {
 
 export function PageHeader({ title, sub, action }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 14, alignItems: 'end', marginBottom: 18 }}>
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        gap: 14,
+        alignItems: 'end',
+        marginBottom: 18,
+      }}
+    >
       <div>
         <h1
-          style={{ margin: 0, fontFamily: 'Fraunces, serif', fontSize: 'clamp(1.65rem,3vw,2.2rem)' }}
+          style={{
+            margin: 0,
+            fontFamily: 'Fraunces, serif',
+            fontSize: 'clamp(1.65rem,3vw,2.2rem)',
+            color: '#4a4a4a',
+          }}
           dangerouslySetInnerHTML={{ __html: title }}
         />
         <p style={{ margin: '6px 0 0', color: 'var(--ink-m)' }}>{sub}</p>

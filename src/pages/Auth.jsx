@@ -12,7 +12,11 @@ const STRENGTH_WIDTH = { weak: '33%', fair: '66%', strong: '100%' }
 
 function FieldError({ msg }) {
   if (!msg) return null
-  return <span role="alert" style={{ fontSize: 12, color: '#ef4444', marginTop: 2 }}>{msg}</span>
+  return (
+    <span role="alert" style={{ fontSize: 12, color: '#ef4444', marginTop: 2 }}>
+      {msg}
+    </span>
+  )
 }
 
 function PasswordStrengthBar({ password }) {
@@ -21,9 +25,18 @@ function PasswordStrengthBar({ password }) {
   return (
     <div style={{ marginTop: 4 }}>
       <div style={{ height: 4, borderRadius: 4, background: '#e5e7df', overflow: 'hidden' }}>
-        <div style={{ height: '100%', width: STRENGTH_WIDTH[level], background: STRENGTH_COLOR[level], transition: 'width 0.3s, background 0.3s' }} />
+        <div
+          style={{
+            height: '100%',
+            width: STRENGTH_WIDTH[level],
+            background: STRENGTH_COLOR[level],
+            transition: 'width 0.3s, background 0.3s',
+          }}
+        />
       </div>
-      <span style={{ fontSize: 11, color: STRENGTH_COLOR[level], fontWeight: 600 }}>{STRENGTH_LABEL[level]}</span>
+      <span style={{ fontSize: 11, color: STRENGTH_COLOR[level], fontWeight: 600 }}>
+        {STRENGTH_LABEL[level]}
+      </span>
     </div>
   )
 }
@@ -46,7 +59,13 @@ export function AuthPage() {
   const [mode, setMode] = useState('signin')
   const [signinRole, setSigninRole] = useState('seeker')
   const [signin, setSignin] = useState({ email: '', password: '' })
-  const [signup, setSignup] = useState({ name: '', email: '', password: '', confirm: '', role: 'seeker' })
+  const [signup, setSignup] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirm: '',
+    role: 'seeker',
+  })
   const [signinErrors, setSigninErrors] = useState({})
   const [signupErrors, setSignupErrors] = useState({})
 
@@ -54,8 +73,13 @@ export function AuthPage() {
     mutationFn: () => apiSignIn(signin.email.trim(), signin.password),
     onSuccess: ({ data }) => {
       signIn(data.token)
-      const initials = (data.user?.name || signin.email)
-        .split(' ').filter(Boolean).slice(0, 2).map((p) => p[0].toUpperCase()).join('') || 'MB'
+      const initials =
+        (data.user?.name || signin.email)
+          .split(' ')
+          .filter(Boolean)
+          .slice(0, 2)
+          .map((p) => p[0].toUpperCase())
+          .join('') || 'MB'
       setUser({ ...data.user, initials, role: signinRole, onboarded: true })
       toast(signinRole === 'mentor' ? 'Signed in as mentor' : 'Welcome back!', 'success')
       navigate('/feed')
@@ -66,12 +90,30 @@ export function AuthPage() {
   })
 
   const signupMutation = useMutation({
-    mutationFn: () => apiSignUp(signup.name.trim(), signup.email.trim(), signup.password, signup.role),
+    mutationFn: () =>
+      apiSignUp(signup.name.trim(), signup.email.trim(), signup.password, signup.role),
     onSuccess: ({ data }) => {
       signIn(data.token)
-      const initials = signup.name.split(' ').filter(Boolean).slice(0, 2).map((p) => p[0].toUpperCase()).join('') || 'MB'
-      setUser({ ...data.user, name: signup.name.trim(), initials, role: signup.role, onboarded: true })
-      toast(signup.role === 'mentor' ? 'Mentor account created. Welcome to MindBridge!' : 'Account created. Welcome!', 'success')
+      const initials =
+        signup.name
+          .split(' ')
+          .filter(Boolean)
+          .slice(0, 2)
+          .map((p) => p[0].toUpperCase())
+          .join('') || 'MB'
+      setUser({
+        ...data.user,
+        name: signup.name.trim(),
+        initials,
+        role: signup.role,
+        onboarded: true,
+      })
+      toast(
+        signup.role === 'mentor'
+          ? 'Mentor account created. Welcome to MindBridge!'
+          : 'Account created. Welcome!',
+        'success',
+      )
       navigate('/feed')
     },
     onError: (err) => {
@@ -116,13 +158,28 @@ export function AuthPage() {
 
       <Card style={{ marginBottom: 12 }}>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <Button variant={mode === 'signin' && signinRole === 'seeker' ? 'sage' : 'outline'} onClick={() => { setMode('signin'); setSigninRole('seeker') }}>
+          <Button
+            variant={mode === 'signin' && signinRole === 'seeker' ? 'sage' : 'outline'}
+            onClick={() => {
+              setMode('signin')
+              setSigninRole('seeker')
+            }}
+          >
             Sign in
           </Button>
-          <Button variant={mode === 'signin' && signinRole === 'mentor' ? 'sage' : 'outline'} onClick={() => { setMode('signin'); setSigninRole('mentor') }}>
+          <Button
+            variant={mode === 'signin' && signinRole === 'mentor' ? 'sage' : 'outline'}
+            onClick={() => {
+              setMode('signin')
+              setSigninRole('mentor')
+            }}
+          >
             Login as a mentor
           </Button>
-          <Button variant={mode === 'signup' ? 'sage' : 'outline'} onClick={() => setMode('signup')}>
+          <Button
+            variant={mode === 'signup' ? 'sage' : 'outline'}
+            onClick={() => setMode('signup')}
+          >
             Create account
           </Button>
         </div>
@@ -138,7 +195,10 @@ export function AuthPage() {
                 type="email"
                 value={signin.email}
                 autoComplete="email"
-                onChange={(e) => { setSignin((s) => ({ ...s, email: e.target.value })); setSigninErrors((er) => ({ ...er, email: null })) }}
+                onChange={(e) => {
+                  setSignin((s) => ({ ...s, email: e.target.value }))
+                  setSigninErrors((er) => ({ ...er, email: null }))
+                }}
                 placeholder="you@example.com"
                 style={fieldStyle(signinErrors.email)}
               />
@@ -150,7 +210,10 @@ export function AuthPage() {
                 type="password"
                 value={signin.password}
                 autoComplete="current-password"
-                onChange={(e) => { setSignin((s) => ({ ...s, password: e.target.value })); setSigninErrors((er) => ({ ...er, password: null })) }}
+                onChange={(e) => {
+                  setSignin((s) => ({ ...s, password: e.target.value }))
+                  setSigninErrors((er) => ({ ...er, password: null }))
+                }}
                 placeholder="Enter password"
                 style={fieldStyle(signinErrors.password)}
               />
@@ -160,7 +223,13 @@ export function AuthPage() {
               <Button type="submit" disabled={signinMutation.isPending}>
                 {signinMutation.isPending ? <Spinner size={16} color="#fff" /> : 'Sign in'}
               </Button>
-              <Button type="button" variant="outline" onClick={() => toast('Password reset will be available once the backend is live.', 'default')}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() =>
+                  toast('Password reset will be available once the backend is live.', 'default')
+                }
+              >
                 Forgot password
               </Button>
             </div>
@@ -179,7 +248,12 @@ export function AuthPage() {
                     type="button"
                     onClick={() => setSignup((s) => ({ ...s, role: r }))}
                     style={{
-                      flex: 1, padding: '10px 0', borderRadius: 10, cursor: 'pointer', fontWeight: 500, fontSize: 14,
+                      flex: 1,
+                      padding: '10px 0',
+                      borderRadius: 10,
+                      cursor: 'pointer',
+                      fontWeight: 500,
+                      fontSize: 14,
                       border: signup.role === r ? '2px solid #7FA878' : '1px solid #d8decc',
                       background: signup.role === r ? '#f0f7ee' : '#fff',
                       color: signup.role === r ? '#4a7c45' : 'var(--ink-m)',
@@ -195,7 +269,10 @@ export function AuthPage() {
               <input
                 value={signup.name}
                 autoComplete="name"
-                onChange={(e) => { setSignup((s) => ({ ...s, name: e.target.value })); setSignupErrors((er) => ({ ...er, name: null })) }}
+                onChange={(e) => {
+                  setSignup((s) => ({ ...s, name: e.target.value }))
+                  setSignupErrors((er) => ({ ...er, name: null }))
+                }}
                 placeholder="Maya Reed"
                 style={fieldStyle(signupErrors.name)}
               />
@@ -207,7 +284,10 @@ export function AuthPage() {
                 type="email"
                 value={signup.email}
                 autoComplete="email"
-                onChange={(e) => { setSignup((s) => ({ ...s, email: e.target.value })); setSignupErrors((er) => ({ ...er, email: null })) }}
+                onChange={(e) => {
+                  setSignup((s) => ({ ...s, email: e.target.value }))
+                  setSignupErrors((er) => ({ ...er, email: null }))
+                }}
                 placeholder="you@example.com"
                 style={fieldStyle(signupErrors.email)}
               />
@@ -220,7 +300,10 @@ export function AuthPage() {
                   type="password"
                   value={signup.password}
                   autoComplete="new-password"
-                  onChange={(e) => { setSignup((s) => ({ ...s, password: e.target.value })); setSignupErrors((er) => ({ ...er, password: null })) }}
+                  onChange={(e) => {
+                    setSignup((s) => ({ ...s, password: e.target.value }))
+                    setSignupErrors((er) => ({ ...er, password: null }))
+                  }}
                   placeholder="At least 8 characters"
                   style={fieldStyle(signupErrors.password)}
                 />
@@ -233,7 +316,10 @@ export function AuthPage() {
                   type="password"
                   value={signup.confirm}
                   autoComplete="new-password"
-                  onChange={(e) => { setSignup((s) => ({ ...s, confirm: e.target.value })); setSignupErrors((er) => ({ ...er, confirm: null })) }}
+                  onChange={(e) => {
+                    setSignup((s) => ({ ...s, confirm: e.target.value }))
+                    setSignupErrors((er) => ({ ...er, confirm: null }))
+                  }}
                   placeholder="Repeat password"
                   style={fieldStyle(signupErrors.confirm)}
                 />
@@ -244,7 +330,9 @@ export function AuthPage() {
               <Button type="submit" disabled={signupMutation.isPending}>
                 {signupMutation.isPending ? <Spinner size={16} color="#fff" /> : 'Create account'}
               </Button>
-              <Button type="button" variant="outline" onClick={() => setMode('signin')}>I already have an account</Button>
+              <Button type="button" variant="outline" onClick={() => setMode('signin')}>
+                I already have an account
+              </Button>
             </div>
           </form>
         </Card>

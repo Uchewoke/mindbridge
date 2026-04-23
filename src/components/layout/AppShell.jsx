@@ -43,15 +43,18 @@ export default function AppShell({ children }) {
         margin: '14px 0 0',
         fontSize: 12,
         lineHeight: 1.45,
-        color: active ? '#9fb39f' : 'var(--ink-m)',
+        color: '#c0392b',
       }}
     >
-      MindBridge content is for peer support and informational purposes only. It is not a substitute for medical, mental health,
-      or emergency care. If you are in immediate danger, call local emergency services now.
+      MindBridge content is for peer support and informational purposes only. It is not a substitute
+      for medical, mental health, or emergency care. If you are in immediate danger, call local
+      emergency services now.
     </p>
   )
 
-  const visibleSecondaryNavItems = secondaryNavItems.filter((n) => (n[0] === 'auth' ? !isAuthenticated : true))
+  const visibleSecondaryNavItems = secondaryNavItems.filter((n) =>
+    n[0] === 'auth' ? !isAuthenticated : true,
+  )
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 1100px)')
@@ -77,7 +80,13 @@ export default function AppShell({ children }) {
   }
 
   return (
-    <div style={{ minHeight: '100dvh', background: active ? 'var(--anon-bg)' : undefined, color: active ? '#e5f2e3' : undefined }}>
+    <div
+      style={{
+        minHeight: '100dvh',
+        background: active ? 'var(--anon-bg)' : undefined,
+        color: active ? '#e5f2e3' : undefined,
+      }}
+    >
       <header
         style={{
           height: 'var(--topbar-h)',
@@ -93,18 +102,50 @@ export default function AppShell({ children }) {
           zIndex: 10,
         }}
       >
-        <button onClick={toggleSidebar} style={{ border: 0, background: 'transparent', fontSize: 18, cursor: 'pointer', color: 'inherit' }}>
+        <button
+          onClick={toggleSidebar}
+          style={{
+            border: 0,
+            background: 'transparent',
+            fontSize: 18,
+            cursor: 'pointer',
+            color: 'inherit',
+          }}
+        >
           ☰
         </button>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <Link to="/feed" style={{ display: 'flex', alignItems: 'center', gap: 8, marginRight: 12 }}>
-            <span style={{ width: 14, height: 14, borderRadius: 4, background: active ? 'var(--anon-accent)' : 'linear-gradient(135deg,var(--sage),var(--terra))' }} />
-            <strong style={{ color: active ? 'var(--anon-accent)' : 'var(--ink)' }}>MindBridge</strong>
+          <Link
+            to="/feed"
+            style={{ display: 'flex', alignItems: 'center', gap: 8, marginRight: 12 }}
+          >
+            <span
+              style={{
+                width: 14,
+                height: 14,
+                borderRadius: 4,
+                background: active
+                  ? 'var(--anon-accent)'
+                  : 'linear-gradient(135deg,var(--sage),var(--terra))',
+              }}
+            />
+            <strong style={{ color: active ? 'var(--anon-accent)' : 'var(--ink)' }}>
+              MindBridge
+            </strong>
           </Link>
           <SearchBar isAnon={active} />
         </div>
         {active ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, border: '1px solid #1f3f27', borderRadius: 999, padding: '6px 10px' }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              border: '1px solid #1f3f27',
+              borderRadius: 999,
+              padding: '6px 10px',
+            }}
+          >
             <span>{alias}</span>
             <Button variant="anon" size="xs" onClick={disableAnon}>
               Exit
@@ -126,7 +167,16 @@ export default function AppShell({ children }) {
             {isAuthenticated ? 'Signed in' : 'Guest'}
           </span>
           {isAuthenticated ? (
-            <span style={{ color: 'var(--ink-m)', fontSize: 12, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <span
+              style={{
+                color: 'var(--ink-m)',
+                fontSize: 12,
+                maxWidth: 180,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
               {user.email}
             </span>
           ) : null}
@@ -144,7 +194,11 @@ export default function AppShell({ children }) {
             </Button>
           ) : null}
           <NotifDropdown isAnon={active} />
-          <Avatar initials={user.initials} background={user.avatar} emoji={active ? '👻' : undefined} />
+          <Avatar
+            initials={user.initials}
+            background={user.avatar}
+            emoji={active ? '👻' : undefined}
+          />
         </div>
       </header>
 
@@ -165,7 +219,9 @@ export default function AppShell({ children }) {
           overflowY: 'auto',
         }}
       >
-        <p style={{ margin: '4px 4px 8px', color: 'var(--ink-m)', fontSize: 12, fontWeight: 700 }}>Main</p>
+        <p style={{ margin: '4px 4px 8px', color: 'var(--ink-m)', fontSize: 12, fontWeight: 700 }}>
+          Main
+        </p>
         {primaryNavItems.map((n) => (
           <div key={n[0]} onClick={closeSidebar}>
             <NavLinkPill to={n[1]} active={location.pathname.startsWith(n[1])} label={n[2]} />
@@ -173,8 +229,17 @@ export default function AppShell({ children }) {
         ))}
 
         <div style={{ marginTop: 8 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 4px 6px' }}>
-            <p style={{ margin: 0, color: 'var(--ink-m)', fontSize: 12, fontWeight: 700 }}>Account & Safety</p>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '0 4px 6px',
+            }}
+          >
+            <p style={{ margin: 0, color: 'var(--ink-m)', fontSize: 12, fontWeight: 700 }}>
+              Account & Safety
+            </p>
             {isCompactNav ? (
               <Button size="xs" variant="ghost" onClick={() => setShowMore((v) => !v)}>
                 {showMore ? 'Less' : 'More'}
@@ -182,7 +247,7 @@ export default function AppShell({ children }) {
             ) : null}
           </div>
 
-          {(showMore || !isCompactNav) ? (
+          {showMore || !isCompactNav ? (
             <div>
               {visibleSecondaryNavItems.map((n) => (
                 <div key={n[0]} onClick={closeSidebar}>
@@ -194,9 +259,15 @@ export default function AppShell({ children }) {
         </div>
 
         <Card style={{ marginTop: 14, background: active ? '#121a12' : '#fff' }}>
-          <p style={{ margin: 0, color: active ? '#98b39a' : 'var(--ink-m)', fontSize: 13 }}>Current profile</p>
-          <h4 style={{ margin: '6px 0 0', fontFamily: 'Fraunces, serif' }}>{active ? alias : user.name}</h4>
-          <p style={{ margin: '4px 0 0', color: active ? '#98b39a' : 'var(--ink-m)', fontSize: 13 }}>
+          <p style={{ margin: 0, color: active ? '#98b39a' : 'var(--ink-m)', fontSize: 13 }}>
+            Current profile
+          </p>
+          <h4 style={{ margin: '6px 0 0', fontFamily: 'Fraunces, serif' }}>
+            {active ? alias : user.name}
+          </h4>
+          <p
+            style={{ margin: '4px 0 0', color: active ? '#98b39a' : 'var(--ink-m)', fontSize: 13 }}
+          >
             {active ? 'Anonymous mode active' : `${user.streak}-day streak`}
           </p>
           {active ? (

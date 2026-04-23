@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { deactivateAccount, requestAccountExport } from '@/api/account'
 import PostCard from '@/components/feed/PostCard'
@@ -14,60 +14,6 @@ import {
   useUIStore,
   useUserStore,
 } from '@/stores'
-
-const AI_FEEDBACK_KEY = 'mindbridge-ai-reply-feedback'
-
-function readAiFeedback() {
-  try {
-    const raw = localStorage.getItem(AI_FEEDBACK_KEY)
-    return raw ? JSON.parse(raw) : {}
-  } catch {
-    return {}
-  }
-}
-
-function writeAiFeedback(next) {
-  try {
-    localStorage.setItem(AI_FEEDBACK_KEY, JSON.stringify(next))
-  } catch {
-    // Ignore storage quota/privacy mode failures.
-  }
-}
-
-function getAiReplySuggestions(lastIncomingText = '', name = 'there', regenKey = 0) {
-  const msg = lastIncomingText.toLowerCase()
-  let suggestions = []
-
-  if (msg.includes('routine') || msg.includes('goal')) {
-    suggestions = [
-      `Thanks ${name}, I can start with one small step tonight.`,
-      'Could we keep it simple and pick one 10-minute action?',
-      'I tried a short routine yesterday and it helped a bit.',
-      'Let us choose one realistic goal for today and keep it manageable.',
-      'That makes sense. I can commit to a short check-in routine tonight.',
-    ]
-  } else if (msg.includes('today') || msg.includes('going')) {
-    suggestions = [
-      `Thanks for checking in, ${name}. Today has been mixed but I am staying steady.`,
-      'I am feeling a little overwhelmed and could use a grounding tip.',
-      'I am doing better now than this morning and trying to keep momentum.',
-      'It has been up and down, but I am still showing up.',
-      'Thanks for asking. I could use support with one next step.',
-    ]
-  } else {
-    suggestions = [
-      `Thank you ${name}, that helped me feel less alone.`,
-      'Can we break that into one step I can do right now?',
-      'I appreciate this. I will try it and report back tonight.',
-      'That was helpful. I feel more grounded after reading this.',
-      'Could you help me turn that into a simple plan?',
-    ]
-  }
-
-  const pivot = Math.abs(regenKey) % suggestions.length
-  const rotated = [...suggestions.slice(pivot), ...suggestions.slice(0, pivot)]
-  return rotated.slice(0, 3)
-}
 
 export function FeedPage() {
   const posts = useFeedStore((s) => s.posts)
@@ -187,70 +133,8 @@ export function MessagesPage() {
   const toast = useUIStore((s) => s.toast)
   const inputRef = useRef(null)
   const [text, setText] = useState('')
-  const [regenKey, setRegenKey] = useState(0)
-  const [suggestionMode, setSuggestionMode] = useState('fill')
-  const [feedback, setFeedback] = useState(() => readAiFeedback())
   const active = threads.find((t) => t.id === activeThread)
   const conversation = chats[activeThread] || []
-  const lastIncoming = [...conversation].reverse().find((m) => !m.mine)
-
-  const aiSuggestions = useMemo(() => {
-    const raw = getAiReplySuggestions(lastIncoming?.text || '', active?.name || 'there', regenKey)
-    return [...raw].sort((a, b) => {
-      const fa = feedback[`${activeThread}::${a}`] || { up: 0, down: 0 }
-      const fb = feedback[`${activeThread}::${b}`] || { up: 0, down: 0 }
-      return fb.up - fb.down - (fa.up - fa.down)
-    })
-  }, [lastIncoming?.text, active?.name, regenKey, feedback, activeThread])
-
-  const applySuggestion = async (suggestion) => {
-    if (suggestionMode === 'copy') {
-      try {
-        await navigator.clipboard.writeText(suggestion)
-        toast('Suggestion copied to clipboard', 'success')
-      } catch {
-        setText(suggestion)
-        toast('Clipboard unavailable, added to input', 'default')
-      }
-      return
-    }
-
-    if (suggestionMode === 'insert') {
-      const input = inputRef.current
-      if (!input) {
-        setText((prev) => `${prev}${prev ? ' ' : ''}${suggestion}`)
-        return
-      }
-      const start = input.selectionStart ?? text.length
-      const end = input.selectionEnd ?? text.length
-      const next = `${text.slice(0, start)}${suggestion}${text.slice(end)}`
-      setText(next)
-      requestAnimationFrame(() => {
-        const cursorPos = start + suggestion.length
-        input.focus()
-        input.setSelectionRange(cursorPos, cursorPos)
-      })
-      return
-    }
-
-    setText(suggestion)
-  }
-
-  const captureFeedback = (suggestion, vote) => {
-    const key = `${activeThread}::${suggestion}`
-    const current = feedback[key] || { up: 0, down: 0 }
-    const next = {
-      ...feedback,
-      [key]: {
-        ...current,
-        up: vote === 'up' ? current.up + 1 : current.up,
-        down: vote === 'down' ? current.down + 1 : current.down,
-      },
-    }
-    setFeedback(next)
-    writeAiFeedback(next)
-    toast(vote === 'up' ? 'Saved positive feedback' : 'Saved negative feedback', 'default')
-  }
 
   return (
     <div>
@@ -280,27 +164,7 @@ export function MessagesPage() {
           ))}
         </Card>
         <Card>
-          <CardTitle
-            action={
-              <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-                <Button size="xs" variant="outline" onClick={() => setRegenKey((k) => k + 1)}>
-                  Regenerate
-                </Button>
-                {['fill', 'insert', 'copy'].map((mode) => (
-                  <Button
-                    key={mode}
-                    size="xs"
-                    variant={suggestionMode === mode ? 'sage' : 'outline'}
-                    onClick={() => setSuggestionMode(mode)}
-                  >
-                    {mode}
-                  </Button>
-                ))}
-              </div>
-            }
-          >
-            {active?.name || 'Thread'}
-          </CardTitle>
+          <CardTitle>{active?.name || 'Thread'}</CardTitle>
           <div style={{ display: 'grid', gap: 6, maxHeight: 360, overflowY: 'auto' }}>
             {conversation.map((m) => (
               <div
@@ -325,43 +189,6 @@ export function MessagesPage() {
                 ) : (
                   m.text
                 )}
-              </div>
-            ))}
-          </div>
-          <p style={{ margin: '10px 0 0', fontSize: 12, color: 'var(--ink-m)' }}>
-            AI suggestions mode: <strong style={{ color: 'var(--ink-s)' }}>{suggestionMode}</strong>
-          </p>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
-            {aiSuggestions.map((s) => (
-              <div key={s} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                <button
-                  onClick={() => applySuggestion(s)}
-                  style={{
-                    border: '1px solid #d8decc',
-                    borderRadius: 999,
-                    background: '#f7fbf5',
-                    color: 'var(--ink-s)',
-                    padding: '6px 10px',
-                    fontSize: 12,
-                    cursor: 'pointer',
-                  }}
-                >
-                  {s}
-                </button>
-                <button
-                  onClick={() => captureFeedback(s, 'up')}
-                  title="Helpful"
-                  style={{ border: 0, background: 'transparent', cursor: 'pointer', fontSize: 12 }}
-                >
-                  👍 {feedback[`${activeThread}::${s}`]?.up || 0}
-                </button>
-                <button
-                  onClick={() => captureFeedback(s, 'down')}
-                  title="Not helpful"
-                  style={{ border: 0, background: 'transparent', cursor: 'pointer', fontSize: 12 }}
-                >
-                  👎 {feedback[`${activeThread}::${s}`]?.down || 0}
-                </button>
               </div>
             ))}
           </div>
@@ -493,7 +320,6 @@ export function SettingsPage() {
     'anonymous',
     'mentoring',
     'accessibility',
-    'billing',
     'danger',
   ]
 
@@ -792,20 +618,6 @@ export function SettingsPage() {
                   Save accessibility settings
                 </Button>
               </div>
-            </div>
-          ) : panel === 'billing' ? (
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit,minmax(140px,1fr))',
-                gap: 10,
-              }}
-            >
-              {['Free $0', 'Plus $9', 'Pro $19'].map((p) => (
-                <Card key={p} style={{ background: '#f8fbf7' }}>
-                  <strong>{p}</strong>
-                </Card>
-              ))}
             </div>
           ) : panel === 'danger' ? (
             <div style={{ display: 'grid', gap: 12 }}>
