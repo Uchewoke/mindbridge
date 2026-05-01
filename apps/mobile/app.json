@@ -1,0 +1,44 @@
+{
+  "expo": {
+    "name": "MindBridge",
+    "slug": "mindbridge",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#f5f6f0"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.mindbridge.app",
+      "infoPlist": {
+        "NSUserNotificationUsageDescription": "MindBridge sends you gentle support reminders and alerts when your mentor has a message for you."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#f5f6f0"
+      },
+      "package": "com.mindbridge.app",
+      "permissions": ["RECEIVE_BOOT_COMPLETED", "VIBRATE"]
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#5a7a5a",
+          "sounds": [],
+          "androidMode": "default",
+          "androidCollapsedTitle": "MindBridge"
+        }
+      ]
+    ],
+    "extra": {
+      "apiBaseUrl": "https://api.mindbridge.app"
+    }
+  }
+}

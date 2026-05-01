@@ -4,6 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -29,6 +30,8 @@ model User {
   mentorContracts Contract[] @relation("mentorContracts")
   adminFlags AdminFlag[]
   hostedSessions Session[] @relation("UserHostedSessions")
+  userConsents UserConsent[]
+  safetyEvents SafetyEvent[]
   @@map("users")
 }
 
@@ -237,4 +240,67 @@ model AdminFlag {
 
   creator User? @relation(fields: [createdBy], references: [id])
   @@map("admin_flags")
+}
+
+model AdminDashboardFlag {
+  id         String    @id
+  text       String
+  user       String
+  severity   String
+  time       String
+  resolved   Boolean   @default(false)
+  resolution String?
+  resolvedAt DateTime? @map("resolved_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  @@map("admin_dashboard_flags")
+}
+
+model AdminDashboardUser {
+  id        String   @id
+  name      String
+  email     String
+  role      String
+  status    String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("admin_dashboard_users")
+}
+
+model AdminDashboardMentor {
+  id        String   @id
+  name      String
+  specialty String
+  status    String
+  story     String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("admin_dashboard_mentors")
+}
+
+model UserConsent {
+  id               Int      @id @default(autoincrement())
+  userId           String   @db.Uuid @map("user_id")
+  agreedToTerms    Boolean  @map("agreed_to_terms")
+  agreedToPrivacy  Boolean  @map("agreed_to_privacy")
+  agreedAt         DateTime @default(now()) @map("agreed_at")
+  ipAddress        String?  @map("ip_address")
+  userAgent        String?  @map("user_agent")
+
+  user User @relation(fields: [userId], references: [id])
+  @@map("user_consents")
+}
+
+model SafetyEvent {
+  id        Int      @id @default(autoincrement())
+  userId    String?  @db.Uuid @map("user_id")
+  type      String
+  content   String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id])
+  @@map("safety_events")
 }

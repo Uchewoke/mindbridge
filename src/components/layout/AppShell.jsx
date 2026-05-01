@@ -5,21 +5,21 @@ import SearchBar from '@/components/layout/SearchBar'
 import NotifDropdown from '@/components/notifications/NotifDropdown'
 import { useAnonStore, useAuthStore, useUIStore, useUserStore } from '@/stores'
 
-const primaryNavItems = [
-  ['feed', '/feed', '📰 Feed'],
-  ['communities', '/communities', '🫂 Communities'],
-  ['discover', '/discover', '🧭 Discover'],
-  ['sessions', '/sessions', '🎙 Sessions'],
-  ['journey', '/journey', '📈 Journey'],
-  ['messages', '/messages', '💬 Messages'],
+const platformNavItems = [
+  ['analytics', '/analytics', '📊 Analytics Dashboard'],
+  ['sessions', '/sessions', '🎙 Live Session'],
 ]
 
-const secondaryNavItems = [
+const navigationNavItems = [
+  ['feed', '/feed', '📰 Feed'],
+  ['communities', '/communities', '🫂 Communities'],
+  ['discover', '/discover', '🧭 Discover Mentor'],
+  ['messages', '/messages', '💬 Messages'],
+  ['journey', '/journey', '📈 My Journey'],
   ['settings', '/settings', '⚙ Settings'],
-  ['admin', '/admin', '🛡 Admin'],
-  ['auth', '/auth', '🔐 Auth'],
-  ['crisis', '/crisis', '🆘 Crisis'],
 ]
+
+const resourceNavItems = [['crisis', '/crisis', '🆘 Crisis Resource']]
 
 export default function AppShell({ children }) {
   const navigate = useNavigate()
@@ -35,6 +35,7 @@ export default function AppShell({ children }) {
   const toggleSidebar = useUIStore((s) => s.toggleSidebar)
   const closeSidebar = useUIStore((s) => s.closeSidebar)
   const [isCompactNav, setIsCompactNav] = useState(false)
+  const [isMobileNav, setIsMobileNav] = useState(false)
   const [showMore, setShowMore] = useState(false)
 
   const disclaimer = (
@@ -52,9 +53,7 @@ export default function AppShell({ children }) {
     </p>
   )
 
-  const visibleSecondaryNavItems = secondaryNavItems.filter((n) =>
-    n[0] === 'auth' ? !isAuthenticated : true,
-  )
+  const visibleNavigationNavItems = navigationNavItems
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 1100px)')
@@ -67,6 +66,17 @@ export default function AppShell({ children }) {
     mq.addEventListener('change', sync)
     return () => mq.removeEventListener('change', sync)
   }, [])
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 900px)')
+    const sync = () => {
+      setIsMobileNav(mq.matches)
+      if (!mq.matches) closeSidebar()
+    }
+    sync()
+    mq.addEventListener('change', sync)
+    return () => mq.removeEventListener('change', sync)
+  }, [closeSidebar])
 
   if (isAuthRoute) {
     return (
@@ -110,6 +120,12 @@ export default function AppShell({ children }) {
             fontSize: 18,
             cursor: 'pointer',
             color: 'inherit',
+            width: 44,
+            height: 44,
+            borderRadius: 10,
+            display: isMobileNav ? 'inline-flex' : 'none',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
           ☰
@@ -210,7 +226,10 @@ export default function AppShell({ children }) {
           left: 0,
           bottom: 0,
           width: 'var(--sidebar-w)',
-          transform: sidebarOpen ? 'translateX(0)' : 'translateX(calc(-1 * var(--sidebar-w)))',
+          transform:
+            isMobileNav && !sidebarOpen
+              ? 'translateX(calc(-1 * var(--sidebar-w)))'
+              : 'translateX(0)',
           transition: 'transform var(--t)',
           background: active ? '#101510' : '#faf8f2',
           borderRight: `1px solid ${active ? '#1e2a1d' : '#e4e7da'}`,
@@ -220,15 +239,15 @@ export default function AppShell({ children }) {
         }}
       >
         <p style={{ margin: '4px 4px 8px', color: 'var(--ink-m)', fontSize: 12, fontWeight: 700 }}>
-          Main
+          Platform
         </p>
-        {primaryNavItems.map((n) => (
+        {platformNavItems.map((n) => (
           <div key={n[0]} onClick={closeSidebar}>
             <NavLinkPill to={n[1]} active={location.pathname.startsWith(n[1])} label={n[2]} />
           </div>
         ))}
 
-        <div style={{ marginTop: 8 }}>
+        <div style={{ marginTop: 12 }}>
           <div
             style={{
               display: 'flex',
@@ -238,7 +257,7 @@ export default function AppShell({ children }) {
             }}
           >
             <p style={{ margin: 0, color: 'var(--ink-m)', fontSize: 12, fontWeight: 700 }}>
-              Account & Safety
+              Navigation
             </p>
             {isCompactNav ? (
               <Button size="xs" variant="ghost" onClick={() => setShowMore((v) => !v)}>
@@ -249,13 +268,24 @@ export default function AppShell({ children }) {
 
           {showMore || !isCompactNav ? (
             <div>
-              {visibleSecondaryNavItems.map((n) => (
+              {visibleNavigationNavItems.map((n) => (
                 <div key={n[0]} onClick={closeSidebar}>
                   <NavLinkPill to={n[1]} active={location.pathname.startsWith(n[1])} label={n[2]} />
                 </div>
               ))}
             </div>
           ) : null}
+        </div>
+
+        <div style={{ marginTop: 12 }}>
+          <p style={{ margin: '0 4px 6px', color: 'var(--ink-m)', fontSize: 12, fontWeight: 700 }}>
+            Resources
+          </p>
+          {resourceNavItems.map((n) => (
+            <div key={n[0]} onClick={closeSidebar}>
+              <NavLinkPill to={n[1]} active={location.pathname.startsWith(n[1])} label={n[2]} />
+            </div>
+          ))}
         </div>
 
         <Card style={{ marginTop: 14, background: active ? '#121a12' : '#fff' }}>
@@ -278,10 +308,33 @@ export default function AppShell({ children }) {
         </Card>
       </aside>
 
-      <main style={{ marginTop: 8, marginLeft: 0, padding: '14px 14px 14px 18px' }}>
+      {isMobileNav && sidebarOpen ? (
+        <div
+          onClick={closeSidebar}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            top: 'var(--topbar-h)',
+            background: 'rgba(17,24,39,0.35)',
+            zIndex: 8,
+          }}
+        />
+      ) : null}
+
+      <main
+        style={{
+          marginTop: 8,
+          marginLeft: isMobileNav ? 0 : 'var(--sidebar-w)',
+          padding: isMobileNav ? '12px' : '14px 14px 14px 18px',
+        }}
+      >
         {children}
         {disclaimer}
       </main>
+      <footer className="text-sm text-center p-4">
+        <a href="/terms">Terms</a> • <a href="/privacy">Privacy</a> •{' '}
+        <a href="/community-guidelines">Guidelines</a>
+      </footer>
     </div>
   )
 }

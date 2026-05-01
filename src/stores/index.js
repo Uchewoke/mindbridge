@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { apiSendChatMessage } from '@/api/chat'
 
 const TOPICS = [
   '📱 Social Media',
@@ -292,25 +293,57 @@ export const useMessagesStore = create((set) => ({
     t1: [{ id: 'm1', mine: false, text: 'How is today going for you?', time: '09:10' }],
     t2: [{ id: 'm2', mine: false, text: 'Remember: tiny changes > perfect plans.', time: '08:42' }],
   },
+  crisisAlert: null,
   activeThread: 't1',
   setActiveThread: (id) => set({ activeThread: id }),
-  sendMessage: (threadId, text) => {
+  clearCrisisAlert: () => set({ crisisAlert: null }),
+  sendMessage: async (threadId, text) => {
     const outbound = { id: crypto.randomUUID(), mine: true, type: 'text', text, time: now() }
     set((state) => ({
       chats: { ...state.chats, [threadId]: [...(state.chats[threadId] || []), outbound] },
     }))
-    setTimeout(() => {
-      const inbound = {
-        id: crypto.randomUUID(),
-        mine: false,
-        type: 'text',
-        text: AUTO_REPLIES[threadId] || 'I hear you. Keep sharing.',
-        time: now(),
-      }
+
+    try {
+      const response = await apiSendChatMessage(text)
+      const isCrisis = response?.type === 'crisis'
+      const inboundText =
+        typeof response?.message === 'string' && response.message.trim()
+          ? response.message
+          : AUTO_REPLIES[threadId] || 'I hear you. Keep sharing.'
+
       set((state) => ({
-        chats: { ...state.chats, [threadId]: [...(state.chats[threadId] || []), inbound] },
+        chats: {
+          ...state.chats,
+          [threadId]: [
+            ...(state.chats[threadId] || []),
+            {
+              id: crypto.randomUUID(),
+              mine: false,
+              type: 'text',
+              text: inboundText,
+              time: now(),
+            },
+          ],
+        },
+        crisisAlert: isCrisis ? { message: inboundText, threadId, at: Date.now() } : null,
       }))
-    }, 1600)
+    } catch {
+      set((state) => ({
+        chats: {
+          ...state.chats,
+          [threadId]: [
+            ...(state.chats[threadId] || []),
+            {
+              id: crypto.randomUUID(),
+              mine: false,
+              type: 'text',
+              text: AUTO_REPLIES[threadId] || 'I hear you. Keep sharing.',
+              time: now(),
+            },
+          ],
+        },
+      }))
+    }
   },
   sendVoiceMessage: (threadId, blobUrl, durationSec) => {
     const outbound = {

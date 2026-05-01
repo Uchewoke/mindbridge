@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { Button, Card, CardTitle, PageHeader, Spinner } from '@/components/ui'
 import { useAuthStore, useUIStore, useUserStore } from '@/stores'
@@ -68,6 +68,7 @@ export function AuthPage() {
   })
   const [signinErrors, setSigninErrors] = useState({})
   const [signupErrors, setSignupErrors] = useState({})
+  const [agreed, setAgreed] = useState(false)
 
   const signinMutation = useMutation({
     mutationFn: () => apiSignIn(signin.email.trim(), signin.password),
@@ -144,6 +145,10 @@ export function AuthPage() {
     if (Object.keys(errs).length) return
     if (passwordStrength(signup.password) === 'weak') {
       setSignupErrors((e) => ({ ...e, password: 'Password is too weak. Add numbers or symbols.' }))
+      return
+    }
+    if (!agreed) {
+      setSignupErrors((e) => ({ ...e, agreed: 'You must agree to the Terms and Privacy Policy.' }))
       return
     }
     signupMutation.mutate()
@@ -326,8 +331,37 @@ export function AuthPage() {
                 <FieldError msg={signupErrors.confirm} />
               </label>
             </div>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginTop: 4 }}>
+              <input
+                id="legal-consent"
+                type="checkbox"
+                checked={agreed}
+                onChange={(e) => {
+                  setAgreed(e.target.checked)
+                  setSignupErrors((er) => ({ ...er, agreed: null }))
+                }}
+                style={{ marginTop: 2, accentColor: '#4e7a49', flexShrink: 0 }}
+              />
+              <div>
+                <label
+                  htmlFor="legal-consent"
+                  style={{ fontSize: 13, color: 'var(--ink-m)', cursor: 'pointer' }}
+                >
+                  I agree to the{' '}
+                  <Link to="/terms" target="_blank" style={{ color: '#4a7c45' }}>
+                    Terms of Service
+                  </Link>{' '}
+                  and{' '}
+                  <Link to="/privacy" target="_blank" style={{ color: '#4a7c45' }}>
+                    Privacy Policy
+                  </Link>
+                  , and understand this platform is not a substitute for medical care.
+                </label>
+                <FieldError msg={signupErrors.agreed} />
+              </div>
+            </div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <Button type="submit" disabled={signupMutation.isPending}>
+              <Button type="submit" disabled={signupMutation.isPending || !agreed}>
                 {signupMutation.isPending ? <Spinner size={16} color="#fff" /> : 'Create account'}
               </Button>
               <Button type="button" variant="outline" onClick={() => setMode('signin')}>

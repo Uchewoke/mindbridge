@@ -1,9 +1,56 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { deactivateAccount, requestAccountExport } from '@/api/account'
 import PostCard from '@/components/feed/PostCard'
 import { VoiceRecorder } from '@/components/messages/VoiceRecorder'
 import { Avatar, Button, Card, CardTitle, EmptyState, PageHeader, ToggleRow } from '@/components/ui'
+
+function GuidelinesBanner() {
+  const [dismissed, setDismissed] = useState(
+    () => sessionStorage.getItem('guidelines-banner') === '1',
+  )
+  if (dismissed) return null
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 10,
+        background: '#f4faf2',
+        border: '1px solid #c8dbc3',
+        borderRadius: 12,
+        padding: '10px 14px',
+        marginBottom: 12,
+      }}
+    >
+      <span style={{ fontSize: 14, color: 'var(--ink)' }}>
+        🤝 This is a safe, moderated space.{' '}
+        <Link to="/guidelines" style={{ color: 'var(--sage-d, #4e7a49)', fontWeight: 600 }}>
+          Read our Community Guidelines
+        </Link>{' '}
+        before posting.
+      </span>
+      <button
+        aria-label="Dismiss guidelines banner"
+        onClick={() => {
+          sessionStorage.setItem('guidelines-banner', '1')
+          setDismissed(true)
+        }}
+        style={{
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          fontSize: 16,
+          color: 'var(--ink-m)',
+          lineHeight: 1,
+        }}
+      >
+        ✕
+      </button>
+    </div>
+  )
+}
 import {
   useAnonStore,
   useAuthStore,
@@ -31,6 +78,7 @@ export function FeedPage() {
         title="Recovery Feed <em>For Real People</em>"
         sub="Share honestly, support freely, heal together."
       />
+      <GuidelinesBanner />
       <Card style={{ marginBottom: 12 }}>
         <textarea
           value={draft}
@@ -130,11 +178,65 @@ export function MessagesPage() {
   const setActiveThread = useMessagesStore((s) => s.setActiveThread)
   const sendMessage = useMessagesStore((s) => s.sendMessage)
   const sendVoiceMessage = useMessagesStore((s) => s.sendVoiceMessage)
+  const crisisAlert = useMessagesStore((s) => s.crisisAlert)
+  const clearCrisisAlert = useMessagesStore((s) => s.clearCrisisAlert)
   const toast = useUIStore((s) => s.toast)
   const inputRef = useRef(null)
+  const modalRef = useRef(null)
+  const previousFocusRef = useRef(null)
   const [text, setText] = useState('')
   const active = threads.find((t) => t.id === activeThread)
   const conversation = chats[activeThread] || []
+
+  useEffect(() => {
+    if (!crisisAlert || !modalRef.current) return
+
+    previousFocusRef.current = document.activeElement
+    const root = modalRef.current
+    const focusableSelector =
+      'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])'
+    const focusable = Array.from(root.querySelectorAll(focusableSelector)).filter(
+      (node) => !node.hasAttribute('disabled'),
+    )
+
+    if (focusable.length > 0) focusable[0].focus()
+    else root.focus()
+
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        clearCrisisAlert()
+        return
+      }
+
+      if (event.key !== 'Tab') return
+      if (!focusable.length) {
+        event.preventDefault()
+        return
+      }
+
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      const activeElement = document.activeElement
+
+      if (event.shiftKey && activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
+    }
+
+    document.addEventListener('keydown', onKeyDown)
+
+    return () => {
+      document.removeEventListener('keydown', onKeyDown)
+      if (previousFocusRef.current && typeof previousFocusRef.current.focus === 'function') {
+        previousFocusRef.current.focus()
+      }
+    }
+  }, [crisisAlert, clearCrisisAlert])
 
   return (
     <div>
@@ -142,6 +244,31 @@ export function MessagesPage() {
         title="Direct <em>Messages</em>"
         sub="One-to-one support with mentors and peers."
       />
+      {crisisAlert ? (
+        <Card
+          style={{
+            border: '1px solid #f5c2c7',
+            background: '#fff5f5',
+            marginBottom: 12,
+          }}
+        >
+          <strong style={{ color: '#842029' }}>Crisis Support</strong>
+          <p style={{ margin: '0.5rem 0 0', color: '#842029' }}>{crisisAlert.message}</p>
+          <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+            <a href="tel:911">
+              <Button size="sm">Call 911</Button>
+            </a>
+            <a href="tel:988">
+              <Button size="sm" variant="outline">
+                Call 988
+              </Button>
+            </a>
+            <Button size="sm" variant="ghost" onClick={clearCrisisAlert}>
+              Dismiss
+            </Button>
+          </div>
+        </Card>
+      ) : null}
       <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 12 }}>
         <Card style={{ padding: 8 }}>
           {threads.map((t) => (
@@ -208,9 +335,9 @@ export function MessagesPage() {
             />
             <Button
               size="sm"
-              onClick={() => {
+              onClick={async () => {
                 if (!text.trim()) return
-                sendMessage(activeThread, text)
+                await sendMessage(activeThread, text)
                 setText('')
               }}
             >
@@ -219,6 +346,46 @@ export function MessagesPage() {
           </div>
         </Card>
       </div>
+      {crisisAlert ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="crisis-modal-title"
+          aria-describedby="crisis-modal-desc"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.45)',
+            display: 'grid',
+            placeItems: 'center',
+            zIndex: 1000,
+            padding: 16,
+          }}
+        >
+          <div ref={modalRef} tabIndex={-1} style={{ maxWidth: 520, width: '100%' }}>
+            <Card style={{ border: '1px solid #f5c2c7' }}>
+              <CardTitle id="crisis-modal-title">Crisis Support Needed</CardTitle>
+              <p id="crisis-modal-desc" style={{ color: '#842029' }}>
+                {crisisAlert.message}
+              </p>
+              <p style={{ marginTop: 8 }}>
+                If there is immediate danger, contact emergency services now.
+              </p>
+              <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+                <a href="tel:911">
+                  <Button>Call 911</Button>
+                </a>
+                <a href="tel:988">
+                  <Button variant="outline">Call or text 988</Button>
+                </a>
+                <Button variant="ghost" onClick={clearCrisisAlert}>
+                  Close
+                </Button>
+              </div>
+            </Card>
+          </div>
+        </div>
+      ) : null}
       <style>{`@media (max-width: 900px){div[style*="grid-template-columns: 280px 1fr"]{grid-template-columns:1fr !important;}}`}</style>
     </div>
   )

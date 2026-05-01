@@ -9,6 +9,9 @@ import { JourneyPage } from '@/pages/Journey'
 import { SessionsPage } from '@/pages/Sessions'
 import { AuthPage } from '@/pages/Auth'
 import { AdminPage } from '@/pages/Admin'
+import { GuidelinesPage } from '@/pages/Guidelines'
+import { TermsPage } from '@/pages/Terms'
+import { PrivacyPage } from '@/pages/Privacy'
 import {
   AnonPage,
   CrisisPage,
@@ -47,23 +50,146 @@ function App() {
         <AppShell>
           <Routes>
             <Route path="/" element={<Navigate to="/feed" replace />} />
-            <Route path="/feed" element={<RequireAuth><FeedPage /></RequireAuth>} />
-            <Route path="/communities" element={<RequireAuth><CommunitiesPage /></RequireAuth>} />
-            <Route path="/communities/:slug" element={<RequireAuth><CommunityPage /></RequireAuth>} />
-            <Route path="/discover" element={<RequireAuth><DiscoverPage /></RequireAuth>} />
-            <Route path="/sessions" element={<RequireAuth><SessionsPage /></RequireAuth>} />
-            <Route path="/sessions/:id" element={<RequireAuth><SessionsPage /></RequireAuth>} />
-            <Route path="/journey" element={<RequireAuth><JourneyPage /></RequireAuth>} />
-            <Route path="/analytics" element={<RequireAuth><JourneyPage /></RequireAuth>} />
-            <Route path="/messages" element={<RequireAuth><MessagesPage /></RequireAuth>} />
-            <Route path="/notifications" element={<RequireAuth><NotificationsPage /></RequireAuth>} />
-            <Route path="/auth" element={<GuestOnly><AuthPage /></GuestOnly>} />
-            <Route path="/login" element={<GuestOnly><AuthPage /></GuestOnly>} />
-            <Route path="/signup" element={<GuestOnly><AuthPage /></GuestOnly>} />
-            <Route path="/anonymous" element={<RequireAuth><AnonPage /></RequireAuth>} />
-            <Route path="/settings" element={<RequireAuth><SettingsPage /></RequireAuth>} />
-            <Route path="/admin" element={<RequireRole role="admin"><AdminPage /></RequireRole>} />
+            <Route
+              path="/feed"
+              element={
+                <RequireAuth>
+                  <FeedPage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/communities"
+              element={
+                <RequireAuth>
+                  <CommunitiesPage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/communities/:slug"
+              element={
+                <RequireAuth>
+                  <CommunityPage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/discover"
+              element={
+                <RequireAuth>
+                  <DiscoverPage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/sessions"
+              element={
+                <RequireAuth>
+                  <SessionsPage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/sessions/:id"
+              element={
+                <RequireAuth>
+                  <SessionsPage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/journey"
+              element={
+                <RequireAuth>
+                  <JourneyPage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/analytics"
+              element={
+                <RequireAuth>
+                  <JourneyPage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/ai-mentor"
+              element={
+                <RequireAuth>
+                  <DiscoverPage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/messages"
+              element={
+                <RequireAuth>
+                  <MessagesPage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/notifications"
+              element={
+                <RequireAuth>
+                  <NotificationsPage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/auth"
+              element={
+                <GuestOnly>
+                  <AuthPage />
+                </GuestOnly>
+              }
+            />
+            <Route
+              path="/login"
+              element={
+                <GuestOnly>
+                  <AuthPage />
+                </GuestOnly>
+              }
+            />
+            <Route
+              path="/signup"
+              element={
+                <GuestOnly>
+                  <AuthPage />
+                </GuestOnly>
+              }
+            />
+            <Route
+              path="/anonymous"
+              element={
+                <RequireAuth>
+                  <AnonPage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <RequireAuth>
+                  <SettingsPage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <RequireRole role="admin">
+                  <AdminPage />
+                </RequireRole>
+              }
+            />
             <Route path="/crisis" element={<CrisisPage />} />
+            <Route path="/guidelines" element={<GuidelinesPage />} />
+            <Route path="/terms" element={<TermsPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="*" element={<Navigate to="/feed" replace />} />
           </Routes>
         </AppShell>
