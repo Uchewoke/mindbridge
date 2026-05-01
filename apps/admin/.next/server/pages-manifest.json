@@ -3,9 +3,6 @@
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
   "/": "pages/index.js",
-  "/login": "pages/login.js",
-  "/analytics": "pages/analytics.js",
   "/users": "pages/users.js",
-  "/reports": "pages/reports.js",
-  "/safety": "pages/safety.js"
+  "/login": "pages/login.js"
 }
