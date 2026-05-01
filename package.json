@@ -3,10 +3,6 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "workspaces": [
-    "apps/admin",
-    "backend"
-  ],
   "scripts": {
     "dev": "vite",
     "dev:admin": "npm run dev --workspace @peer-mentorship/admin",
