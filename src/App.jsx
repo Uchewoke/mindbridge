@@ -1,6 +1,9 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { useEffect, useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { apiMe } from '@/api/auth'
 import AppShell from '@/components/layout/AppShell'
+import BootSplash from '@/components/ui/BootSplash'
 import ToastContainer from '@/components/ui/Toast'
 import { useAuthStore, useUserStore } from '@/stores'
 import { CommunityPage, CommunitiesPage } from '@/pages/Communities'
@@ -44,6 +47,43 @@ function RequireRole({ role, children }) {
 }
 
 function App() {
+  const sessionToken = useAuthStore((s) => s.sessionToken)
+  const signIn = useAuthStore((s) => s.signIn)
+  const signOut = useAuthStore((s) => s.signOut)
+  const setUser = useUserStore((s) => s.setUser)
+  const [authReady, setAuthReady] = useState(false)
+
+  useEffect(() => {
+    let isActive = true
+
+    async function restoreSession() {
+      if (!sessionToken) {
+        if (isActive) setAuthReady(true)
+        return
+      }
+
+      try {
+        const { data } = await apiMe()
+        if (!isActive) return
+
+        signIn(sessionToken)
+        if (data?.user) setUser(data.user)
+      } catch {
+        if (!isActive) return
+        signOut()
+      } finally {
+        if (isActive) setAuthReady(true)
+      }
+    }
+
+    restoreSession()
+    return () => {
+      isActive = false
+    }
+  }, [sessionToken, setUser, signIn, signOut])
+
+  if (!authReady) return <BootSplash />
+
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>

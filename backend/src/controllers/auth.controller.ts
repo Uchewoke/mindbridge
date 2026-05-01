@@ -1,40 +1,160 @@
 import { Request, Response } from 'express'
+import bcrypt from 'bcryptjs'
+import jwt from 'jsonwebtoken'
+import { prisma } from '../lib/prisma.js'
 import { logUserConsent } from '../services/consent.service.js'
 
-export function loginController(req: Request, res: Response): void {
-  const { email } = req.body as { email?: string }
-  const isAdmin = email?.toLowerCase() === 'admin@mindbridge.local'
+const JWT_SECRET = process.env.JWT_SECRET ?? 'mindbridge-dev-secret'
+const JWT_EXPIRES = '7d'
 
-  // TODO: replace with real credential verification and JWT signing.
-  // For now this returns a demo token; the isAdmin flag mirrors what would
-  // be stored in the DB / JWT claims for the requesting user.
-  res.json({ token: 'demo-token', userId: 'user_1', isAdmin })
+function makeToken(userId: string, isAdmin: boolean): string {
+  return jwt.sign({ sub: userId, isAdmin }, JWT_SECRET, { expiresIn: JWT_EXPIRES })
+}
+
+function toAuthUser(user: {
+  id: string
+  email: string | null
+  isAdmin: boolean
+  profile: {
+    displayName: string | null
+    role: string | null
+    initials: string | null
+  } | null
+}) {
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.profile?.displayName,
+    role: user.profile?.role,
+    initials: user.profile?.initials,
+    onboarded: Boolean(user.profile?.displayName),
+  }
 }
 
 export async function signupController(req: Request, res: Response): Promise<void> {
-  const { agreed, userId } = req.body as { agreed?: boolean; userId?: string }
+  const {
+    name,
+    email,
+    password,
+    role = 'seeker',
+  } = req.body as {
+    name?: string
+    email?: string
+    password?: string
+    role?: string
+  }
 
-  if (!agreed) {
-    res
-      .status(400)
-      .json({ error: 'Consent required. You must agree to the Terms and Privacy Policy.' })
+  if (!email || !password || !name) {
+    res.status(400).json({ message: 'Name, email and password are required.' })
     return
   }
 
-  // TODO: replace with real user creation once auth is wired up.
-  // userId comes from the created user record; hardcoded here for demo.
-  const resolvedUserId: string = userId ?? 'user_1'
+  const existing = await prisma.user.findUnique({ where: { email } })
+  if (existing) {
+    res.status(409).json({ message: 'An account with that email already exists.' })
+    return
+  }
+
+  const passwordHash = await bcrypt.hash(password, 12)
+
+  const user = await prisma.user.create({
+    data: {
+      email,
+      passwordHash,
+      profile: {
+        create: {
+          displayName: name,
+          initials: name
+            .split(' ')
+            .filter(Boolean)
+            .slice(0, 2)
+            .map((p: string) => p[0].toUpperCase())
+            .join(''),
+          role,
+        },
+      },
+    },
+    include: { profile: true },
+  })
 
   try {
     await logUserConsent({
-      userId: resolvedUserId,
+      userId: user.id,
       ipAddress: req.ip,
       userAgent: req.headers['user-agent'],
     })
-  } catch (err) {
-    // Log but do not block signup — consent table may not be migrated yet in dev
-    console.error('[consent] Failed to log consent:', err)
+  } catch {
+    // non-blocking
   }
 
-  res.status(201).json({ created: true })
+  const token = makeToken(user.id, false)
+  res.status(201).json({
+    token,
+    user: toAuthUser(user),
+  })
+}
+
+export async function loginController(req: Request, res: Response): Promise<void> {
+  const { email, password } = req.body as { email?: string; password?: string }
+
+  if (!email || !password) {
+    res.status(400).json({ message: 'Email and password are required.' })
+    return
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { email },
+    include: { profile: true },
+  })
+
+  if (!user || !user.passwordHash) {
+    res.status(401).json({ message: 'Invalid email or password.' })
+    return
+  }
+
+  const valid = await bcrypt.compare(password, user.passwordHash)
+  if (!valid) {
+    res.status(401).json({ message: 'Invalid email or password.' })
+    return
+  }
+
+  if (!user.isActive) {
+    res.status(403).json({ message: 'Your account has been suspended.' })
+    return
+  }
+
+  await prisma.user.update({ where: { id: user.id }, data: { lastSeenAt: new Date() } })
+
+  const token = makeToken(user.id, user.isAdmin)
+  res.json({
+    token,
+    isAdmin: user.isAdmin,
+    user: toAuthUser(user),
+  })
+}
+
+export async function meController(req: Request, res: Response): Promise<void> {
+  const userId = (req as Request & { userId?: string }).userId
+
+  if (!userId) {
+    res.status(401).json({ message: 'Missing authorization token' })
+    return
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: { profile: true },
+  })
+
+  if (!user || !user.isActive) {
+    res.status(401).json({ message: 'Invalid or expired token' })
+    return
+  }
+
+  await prisma.user.update({ where: { id: user.id }, data: { lastSeenAt: new Date() } })
+
+  res.json({
+    isAdmin: user.isAdmin,
+    user: toAuthUser(user),
+  })
 }
