@@ -1,6 +1,6 @@
 {
   "buildCommand": "npm run prisma:generate && npm run build && npm run build:backend",
-  "outputDirectory": ".",
+  "outputDirectory": "dist",
   "installCommand": "npm install",
   "framework": null,
   "functions": {

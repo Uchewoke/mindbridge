@@ -6,10 +6,10 @@
   "scripts": {
     "dev": "vite",
     "dev:admin": "npm run dev --workspace @peer-mentorship/admin",
-    "dev:backend": "npm run dev --workspace @peer-mentorship/backend",
+    "dev:backend": "cd backend && npm run dev",
     "build": "vite build",
     "build:admin": "npm run build --workspace @peer-mentorship/admin",
-    "build:backend": "npm run build --workspace @peer-mentorship/backend",
+    "build:backend": "cd backend && npm run build",
     "prisma:generate": "prisma generate",
     "prisma:migrate:dev": "prisma migrate dev --name init",
     "prisma:seed": "prisma db seed",

@@ -3,6 +3,6 @@
 // Rewrites in vercel.json direct /api/* here; Express sees the original URL.
 
 import 'dotenv/config'
-import { createApp } from './backend/dist/app.js'
+import { createApp } from '../backend/dist/app.js'
 
 export default createApp()
